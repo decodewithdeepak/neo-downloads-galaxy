@@ -3,8 +3,6 @@ import { useState } from "react";
 import { VideoInfo, DownloadOption } from "@/types";
 import { getDownloadOptions } from "@/lib/videoUtils";
 import { cn } from "@/lib/utils";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 
 interface VideoPreviewProps {
   videoInfo: VideoInfo;
@@ -106,13 +104,18 @@ const VideoPreview = ({
           
           {isDownloading ? (
             <div className="space-y-2">
-              <Progress value={progress} className="h-2.5 w-full" />
+              <div className="w-full bg-neogray-100 rounded-full h-2.5">
+                <div
+                  className="bg-neoblue-500 h-2.5 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
               <p className="text-sm text-neogray-600">
                 {progress < 100 ? `Downloading... ${Math.round(progress)}%` : "Download complete!"}
               </p>
             </div>
           ) : (
-            <Button
+            <button
               onClick={handleDownload}
               disabled={!selectedOption}
               className={cn(
@@ -137,7 +140,7 @@ const VideoPreview = ({
                 />
               </svg>
               Download Now
-            </Button>
+            </button>
           )}
         </div>
       </div>

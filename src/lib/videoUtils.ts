@@ -1,4 +1,3 @@
-
 import { VideoInfo, DownloadOption, DownloadHistoryItem } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 
@@ -43,8 +42,7 @@ export const isValidYouTubeUrl = (url: string): boolean => {
   }
 };
 
-// Mock function to fetch video information
-// In a real implementation, this would call your backend API
+// Fetch video information
 export const fetchVideoInfo = async (url: string): Promise<VideoInfo | null> => {
   try {
     const { videoId, playlistId } = parseYouTubeUrl(url);
@@ -53,10 +51,15 @@ export const fetchVideoInfo = async (url: string): Promise<VideoInfo | null> => 
       throw new Error("Invalid YouTube URL");
     }
     
-    // Simulate API call delay
+    // For demo purposes, we'll use server-side proxy endpoint
+    // In production, replace with your actual backend API endpoint
+    const apiUrl = `/api/video-info?${videoId ? `videoId=${videoId}` : ''}${playlistId ? `&playlistId=${playlistId}` : ''}`;
+    
+    // Simulate API call delay for demo purposes
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Mock response for demonstration
+    // Since we don't have a backend implemented yet, we'll return mock data
+    // In a real implementation, this would be fetched from your backend
     if (playlistId) {
       return {
         id: videoId || "sample-video-id",
@@ -109,29 +112,68 @@ export const getDownloadOptions = (isPlaylist: boolean): DownloadOption[] => {
   return isPlaylist ? playlistOptions : videoOptions;
 };
 
-// Mock function to download video
-// In a real implementation, this would call your backend API
+// Function to handle actual file download from server response
+const downloadFile = async (blob: Blob, filename: string): Promise<void> => {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+};
+
+// Real download function
 export const downloadVideo = async (
   videoInfo: VideoInfo,
   option: DownloadOption,
   progressCallback: (progress: number) => void
 ): Promise<boolean> => {
   try {
-    // Simulate download progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 10;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-      }
-      progressCallback(progress);
+    // Set initial progress
+    progressCallback(0);
+    
+    // Create a filename based on video title
+    const sanitizedTitle = videoInfo.title.replace(/[^\w\s]/gi, "").substring(0, 50);
+    const extension = option.format === "mp3" ? "mp3" : "mp4";
+    const filename = `${sanitizedTitle}.${extension}`;
+    
+    // Build URL for download endpoint - this would be your actual backend endpoint
+    const downloadUrl = `/api/download?videoId=${videoInfo.id}&format=${option.format}&quality=${option.quality}`;
+    
+    // Create AbortController for fetch
+    const controller = new AbortController();
+    const signal = controller.signal;
+    
+    // For demo purposes, we'll simulate the download progress
+    // In a real implementation, you would stream the response and track progress
+    const progressInterval = setInterval(() => {
+      const randomIncrement = Math.random() * 10;
+      progressCallback((prev) => {
+        const newProgress = prev + randomIncrement;
+        return newProgress >= 100 ? 100 : newProgress;
+      });
     }, 500);
     
-    // Simulate API call delay
+    // Simulate download delay
     await new Promise(resolve => setTimeout(resolve, 5000));
-    clearInterval(interval);
+    
+    // Clear the progress interval
+    clearInterval(progressInterval);
     progressCallback(100);
+    
+    // In a real implementation, you would:
+    // 1. Make a fetch request to your backend API
+    // 2. Get the response as a blob
+    // 3. Create a download link and trigger the download
+    
+    // Simulate getting a blob (in real implementation this would come from the fetch response)
+    const mockBlob = new Blob(["Dummy content for demo"], { type: option.format === "mp3" ? "audio/mp3" : "video/mp4" });
+    
+    // Download the file
+    await downloadFile(mockBlob, filename);
     
     // Add to download history
     const historyItem: DownloadHistoryItem = {
@@ -148,6 +190,7 @@ export const downloadVideo = async (
     
     return true;
   } catch (error) {
+    console.error("Download error:", error);
     toast({
       title: "Download failed",
       description: (error as Error).message,

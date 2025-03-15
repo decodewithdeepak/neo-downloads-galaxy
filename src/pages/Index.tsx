@@ -58,7 +58,7 @@ const Index = () => {
       if (success) {
         toast({
           title: "Download Complete",
-          description: "Your download has completed successfully",
+          description: `Your ${option.format.toUpperCase()} file has been downloaded successfully`,
         });
       }
     } catch (error) {

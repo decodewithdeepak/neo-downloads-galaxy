@@ -2,7 +2,10 @@
 import { VideoInfo, DownloadOption, DownloadHistoryItem } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 
-// Mock function to parse YouTube URL (in real implementation this would check for valid YouTube URLs)
+// API base URL - this should point to your Express server
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+// Parse YouTube URL to extract video ID and playlist ID
 export const parseYouTubeUrl = (url: string): { videoId: string | null; playlistId: string | null } => {
   try {
     const urlObj = new URL(url);
@@ -43,8 +46,7 @@ export const isValidYouTubeUrl = (url: string): boolean => {
   }
 };
 
-// Mock function to fetch video information
-// In a real implementation, this would call your backend API
+// Fetch video information from the backend API
 export const fetchVideoInfo = async (url: string): Promise<VideoInfo | null> => {
   try {
     const { videoId, playlistId } = parseYouTubeUrl(url);
@@ -53,36 +55,27 @@ export const fetchVideoInfo = async (url: string): Promise<VideoInfo | null> => 
       throw new Error("Invalid YouTube URL");
     }
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    console.log(`Attempting to fetch video info for ID: ${videoId}`);
+    console.log(`Using API URL: ${API_BASE_URL}/api/video-info?videoId=${videoId}`);
     
-    // Mock response for demonstration
-    if (playlistId) {
-      return {
-        id: videoId || "sample-video-id",
-        title: "Sample Playlist Video",
-        thumbnail: `https://i.ytimg.com/vi/${videoId || "dQw4w9WgXcQ"}/maxresdefault.jpg`,
-        duration: "Various",
-        author: "Sample Channel",
-        isPlaylist: true,
-        playlistId,
-        playlistTitle: "Sample Playlist Title",
-        videoCount: 10
-      };
-    } else {
-      return {
-        id: videoId as string,
-        title: "Sample YouTube Video",
-        thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-        duration: "3:45",
-        author: "Sample Channel",
-        isPlaylist: false
-      };
+    // Real API call to our backend
+    const apiUrl = `${API_BASE_URL}/api/video-info?${videoId ? `videoId=${videoId}` : ''}${playlistId ? `&playlistId=${playlistId}` : ''}`;
+    
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+      throw new Error(errorData.error || `Server responded with status: ${response.status}`);
     }
+    
+    const videoInfo = await response.json();
+    console.log("Successfully fetched video info:", videoInfo);
+    return videoInfo;
   } catch (error) {
+    console.error("Error fetching video info:", error);
     toast({
       title: "Error fetching video info",
-      description: (error as Error).message,
+      description: (error as Error).message || "Failed to connect to server",
       variant: "destructive"
     });
     return null;
@@ -109,28 +102,92 @@ export const getDownloadOptions = (isPlaylist: boolean): DownloadOption[] => {
   return isPlaylist ? playlistOptions : videoOptions;
 };
 
-// Mock function to download video
-// In a real implementation, this would call your backend API
+// Real download function that streams from our Express backend
 export const downloadVideo = async (
   videoInfo: VideoInfo,
   option: DownloadOption,
   progressCallback: (progress: number) => void
 ): Promise<boolean> => {
   try {
-    // Simulate download progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 10;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-      }
-      progressCallback(progress);
-    }, 500);
+    // Set initial progress
+    progressCallback(0);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    clearInterval(interval);
+    // Create a filename based on video title
+    const sanitizedTitle = videoInfo.title.replace(/[^\w\s]/gi, "").substring(0, 50);
+    const extension = option.format === "mp3" ? "mp3" : "mp4";
+    const filename = `${sanitizedTitle}.${extension}`;
+    
+    // Build URL for download endpoint
+    const downloadUrl = `${API_BASE_URL}/api/download?videoId=${videoInfo.id}&format=${option.format}&quality=${option.quality}`;
+    
+    console.log(`Initiating download from: ${downloadUrl}`);
+    
+    // Fetch the file as a blob
+    const response = await fetch(downloadUrl);
+    
+    if (!response.ok) {
+      let errorMessage = "Download failed";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        // If response isn't JSON, use the status text
+        errorMessage = `Download failed: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+    
+    // Use a ReadableStream to track download progress
+    const reader = response.body?.getReader();
+    const contentLength = +(response.headers.get('Content-Length') || '0');
+    
+    if (!reader) {
+      throw new Error("Unable to read response stream");
+    }
+    
+    // Read the data stream and track progress
+    let receivedLength = 0;
+    const chunks: Uint8Array[] = [];
+    let currentProgress = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (done) {
+        break;
+      }
+      
+      chunks.push(value);
+      receivedLength += value.length;
+      
+      // Calculate and report progress
+      if (contentLength) {
+        currentProgress = Math.round((receivedLength / contentLength) * 100);
+        progressCallback(currentProgress > 100 ? 100 : currentProgress);
+      } else {
+        // If content length is unknown, just update periodically
+        currentProgress += 5;
+        progressCallback(currentProgress > 90 ? 90 : currentProgress);
+      }
+    }
+    
+    // Combine all chunks into a single Blob
+    const blob = new Blob(chunks, { 
+      type: option.format === "mp3" ? "audio/mp3" : "video/mp4" 
+    });
+    
+    // Create a download link and trigger the download
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    // Set final progress
     progressCallback(100);
     
     // Add to download history
@@ -146,13 +203,16 @@ export const downloadVideo = async (
     
     addToDownloadHistory(historyItem);
     
+    console.log("Download completed successfully");
     return true;
   } catch (error) {
+    console.error("Download error:", error);
     toast({
       title: "Download failed",
       description: (error as Error).message,
       variant: "destructive"
     });
+    progressCallback(0); // Reset progress
     return false;
   }
 };

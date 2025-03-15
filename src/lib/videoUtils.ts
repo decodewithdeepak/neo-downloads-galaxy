@@ -1,6 +1,8 @@
-
 import { VideoInfo, DownloadOption, DownloadHistoryItem } from "@/types";
 import { toast } from "@/components/ui/use-toast";
+
+// API base URL - this should point to your Express server
+const API_BASE_URL = "http://localhost:5000";
 
 // Mock function to parse YouTube URL (in real implementation this would check for valid YouTube URLs)
 export const parseYouTubeUrl = (url: string): { videoId: string | null; playlistId: string | null } => {
@@ -43,7 +45,7 @@ export const isValidYouTubeUrl = (url: string): boolean => {
   }
 };
 
-// Fetch video information
+// Fetch video information from the backend API
 export const fetchVideoInfo = async (url: string): Promise<VideoInfo | null> => {
   try {
     const { videoId, playlistId } = parseYouTubeUrl(url);
@@ -52,37 +54,18 @@ export const fetchVideoInfo = async (url: string): Promise<VideoInfo | null> => 
       throw new Error("Invalid YouTube URL");
     }
     
-    // For demo purposes, we'll use server-side proxy endpoint
-    // In production, replace with your actual backend API endpoint
-    const apiUrl = `/api/video-info?${videoId ? `videoId=${videoId}` : ''}${playlistId ? `&playlistId=${playlistId}` : ''}`;
+    // Real API call to our backend
+    const apiUrl = `${API_BASE_URL}/api/video-info?${videoId ? `videoId=${videoId}` : ''}${playlistId ? `&playlistId=${playlistId}` : ''}`;
     
-    // Simulate API call delay for demo purposes
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const response = await fetch(apiUrl);
     
-    // Since we don't have a backend implemented yet, we'll return mock data
-    // In a real implementation, this would be fetched from your backend
-    if (playlistId) {
-      return {
-        id: videoId || "sample-video-id",
-        title: "Sample Playlist Video",
-        thumbnail: `https://i.ytimg.com/vi/${videoId || "dQw4w9WgXcQ"}/maxresdefault.jpg`,
-        duration: "Various",
-        author: "Sample Channel",
-        isPlaylist: true,
-        playlistId,
-        playlistTitle: "Sample Playlist Title",
-        videoCount: 10
-      };
-    } else {
-      return {
-        id: videoId as string,
-        title: "Sample YouTube Video",
-        thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-        duration: "3:45",
-        author: "Sample Channel",
-        isPlaylist: false
-      };
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to fetch video information");
     }
+    
+    const videoInfo = await response.json();
+    return videoInfo;
   } catch (error) {
     toast({
       title: "Error fetching video info",
@@ -113,20 +96,7 @@ export const getDownloadOptions = (isPlaylist: boolean): DownloadOption[] => {
   return isPlaylist ? playlistOptions : videoOptions;
 };
 
-// Function to handle actual file download from server response
-const downloadFile = async (blob: Blob, filename: string): Promise<void> => {
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.style.display = "none";
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
-};
-
-// Real download function
+// Real download function that streams from our Express backend
 export const downloadVideo = async (
   videoInfo: VideoInfo,
   option: DownloadOption,
@@ -141,45 +111,62 @@ export const downloadVideo = async (
     const extension = option.format === "mp3" ? "mp3" : "mp4";
     const filename = `${sanitizedTitle}.${extension}`;
     
-    // Build URL for download endpoint - this would be your actual backend endpoint
-    const downloadUrl = `/api/download?videoId=${videoInfo.id}&format=${option.format}&quality=${option.quality}`;
+    // Build URL for download endpoint
+    const downloadUrl = `${API_BASE_URL}/api/download?videoId=${videoInfo.id}&format=${option.format}&quality=${option.quality}`;
     
-    // Create AbortController for fetch
-    const controller = new AbortController();
-    const signal = controller.signal;
+    // Fetch the file as a blob
+    const response = await fetch(downloadUrl);
     
-    // For demo purposes, we'll simulate the download progress
-    // In a real implementation, you would stream the response and track progress
-    let currentProgress = 0;
-    const progressInterval = setInterval(() => {
-      const randomIncrement = Math.random() * 10;
-      currentProgress += randomIncrement;
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Download failed");
+    }
+    
+    // Use a ReadableStream to track download progress
+    const reader = response.body?.getReader();
+    const contentLength = +(response.headers.get('Content-Length') || '0');
+    
+    if (!reader) {
+      throw new Error("Unable to read response stream");
+    }
+    
+    // Read the data stream and track progress
+    let receivedLength = 0;
+    const chunks: Uint8Array[] = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
       
-      if (currentProgress >= 100) {
-        currentProgress = 100;
-        clearInterval(progressInterval);
+      if (done) {
+        break;
       }
       
-      progressCallback(currentProgress);
-    }, 500);
+      chunks.push(value);
+      receivedLength += value.length;
+      
+      // Calculate and report progress
+      const progress = contentLength ? Math.round((receivedLength / contentLength) * 100) : 0;
+      progressCallback(progress > 100 ? 100 : progress);
+    }
     
-    // Simulate download delay
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Combine all chunks into a single Blob
+    const blob = new Blob(chunks, { 
+      type: option.format === "mp3" ? "audio/mp3" : "video/mp4" 
+    });
     
-    // Clear the progress interval
-    clearInterval(progressInterval);
+    // Create a download link and trigger the download
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    // Set final progress
     progressCallback(100);
-    
-    // In a real implementation, you would:
-    // 1. Make a fetch request to your backend API
-    // 2. Get the response as a blob
-    // 3. Create a download link and trigger the download
-    
-    // Simulate getting a blob (in real implementation this would come from the fetch response)
-    const mockBlob = new Blob(["Dummy content for demo"], { type: option.format === "mp3" ? "audio/mp3" : "video/mp4" });
-    
-    // Download the file
-    await downloadFile(mockBlob, filename);
     
     // Add to download history
     const historyItem: DownloadHistoryItem = {
@@ -202,6 +189,7 @@ export const downloadVideo = async (
       description: (error as Error).message,
       variant: "destructive"
     });
+    progressCallback(0); // Reset progress
     return false;
   }
 };

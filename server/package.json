@@ -1,0 +1,19 @@
+
+{
+  "name": "neotube-server",
+  "version": "1.0.0",
+  "description": "Backend server for Neotube YouTube downloader",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "ytdl-core": "^4.11.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

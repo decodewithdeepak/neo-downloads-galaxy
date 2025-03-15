@@ -8,7 +8,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*', // Allow any origin for development
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Create downloads directory if it doesn't exist
@@ -26,6 +30,7 @@ app.get('/api/video-info', async (req, res) => {
       return res.status(400).json({ error: 'Video ID is required' });
     }
     
+    console.log(`Fetching info for video ID: ${videoId}`);
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
     const info = await ytdl.getInfo(videoUrl);
     
@@ -38,6 +43,7 @@ app.get('/api/video-info', async (req, res) => {
       isPlaylist: false
     };
     
+    console.log(`Successfully fetched info for: ${videoInfo.title}`);
     res.json(videoInfo);
   } catch (error) {
     console.error('Error fetching video info:', error);
@@ -54,6 +60,7 @@ app.get('/api/download', async (req, res) => {
       return res.status(400).json({ error: 'Video ID and format are required' });
     }
     
+    console.log(`Starting download for video ID: ${videoId}, format: ${format}, quality: ${quality}`);
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
     const info = await ytdl.getInfo(videoUrl);
     
@@ -116,5 +123,5 @@ function formatDuration(seconds) {
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+  console.log(`API URL: http://localhost:${port}`);
 });
-

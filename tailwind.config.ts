@@ -141,7 +141,6 @@ export default {
       boxShadow: {
         neo: "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
         "neo-lg": "0 10px 30px -3px rgba(0, 0, 0, 0.05)",
-        "neo-dark": "0 4px 20px -2px rgba(0, 0, 0, 0.3)",
       },
     },
   },

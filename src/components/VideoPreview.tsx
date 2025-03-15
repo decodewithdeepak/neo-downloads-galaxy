@@ -55,12 +55,12 @@ const VideoPreview = ({
         
         <div className="w-full md:w-3/5 space-y-4">
           <div>
-            <h2 className="text-lg md:text-xl font-semibold line-clamp-2" title={videoInfo.title}>
+            <h2 className="text-lg md:text-xl font-semibold line-clamp-2 dark:text-white" title={videoInfo.title}>
               {videoInfo.title}
             </h2>
-            <p className="text-neogray-600 text-sm mt-1">{videoInfo.author}</p>
+            <p className="text-neogray-600 dark:text-neogray-400 text-sm mt-1">{videoInfo.author}</p>
             {videoInfo.isPlaylist && (
-              <div className="mt-2 inline-flex items-center bg-neogray-100 text-neogray-800 text-xs px-2 py-1 rounded">
+              <div className="mt-2 inline-flex items-center bg-neogray-100 dark:bg-neogray-700 text-neogray-800 dark:text-neogray-200 text-xs px-2 py-1 rounded">
                 <svg
                   width="16"
                   height="16"
@@ -83,7 +83,7 @@ const VideoPreview = ({
           </div>
           
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-neogray-800">Select format and quality:</h3>
+            <h3 className="text-sm font-medium text-neogray-800 dark:text-neogray-200">Select format and quality:</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {downloadOptions.map((option, index) => (
                 <button
@@ -92,8 +92,8 @@ const VideoPreview = ({
                   className={cn(
                     "px-3 py-2 text-sm border rounded-lg transition-all duration-200",
                     selectedOption?.label === option.label
-                      ? "bg-neoblue-50 border-neoblue-300 text-neoblue-700"
-                      : "border-neogray-200 hover:border-neoblue-200 hover:bg-neoblue-50/50"
+                      ? "bg-neoblue-50 dark:bg-neoblue-900/50 border-neoblue-300 dark:border-neoblue-700 text-neoblue-700 dark:text-neoblue-300"
+                      : "border-neogray-200 dark:border-neogray-700 hover:border-neoblue-200 dark:hover:border-neoblue-700 hover:bg-neoblue-50/50 dark:hover:bg-neoblue-900/30"
                   )}
                 >
                   {option.label}
@@ -104,13 +104,13 @@ const VideoPreview = ({
           
           {isDownloading ? (
             <div className="space-y-2">
-              <div className="w-full bg-neogray-100 rounded-full h-2.5">
+              <div className="w-full bg-neogray-100 dark:bg-neogray-700 rounded-full h-2.5">
                 <div
                   className="bg-neoblue-500 h-2.5 rounded-full transition-all duration-300 ease-out"
                   style={{ width: `${progress}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-neogray-600">
+              <p className="text-sm text-neogray-600 dark:text-neogray-400">
                 {progress < 100 ? `Downloading... ${Math.round(progress)}%` : "Download complete!"}
               </p>
             </div>

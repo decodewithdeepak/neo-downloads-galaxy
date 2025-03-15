@@ -27,6 +27,28 @@
     --radius: 0.75rem;
   }
 
+  .dark {
+    --background: 220 20% 10%;
+    --foreground: 210 20% 98%;
+    --card: 220 20% 12%;
+    --card-foreground: 210 20% 98%;
+    --popover: 220 20% 12%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 220 20% 18%;
+    --muted-foreground: 220 10% 70%;
+    --accent: 220 20% 18%;
+    --accent-foreground: 210 100% 85%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 210 100% 50%;
+  }
+
   * {
     @apply border-border;
   }
@@ -47,21 +69,21 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-neogray-300 rounded-full;
+    @apply bg-neogray-300 dark:bg-neogray-700 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-neogray-400;
+    @apply bg-neogray-400 dark:bg-neogray-600;
   }
 }
 
 @layer components {
   .neo-input {
-    @apply w-full px-4 py-3 bg-white border border-neogray-200 rounded-lg shadow-sm transition-all duration-200 outline-none focus:ring-2 focus:ring-neoblue-100 focus:border-neoblue-300;
+    @apply w-full px-4 py-3 bg-white dark:bg-neogray-800 border border-neogray-200 dark:border-neogray-700 rounded-lg shadow-sm transition-all duration-200 outline-none focus:ring-2 focus:ring-neoblue-100 dark:focus:ring-neoblue-900 focus:border-neoblue-300 dark:focus:border-neoblue-700;
   }
 
   .neo-card {
-    @apply bg-white rounded-xl border border-neogray-200 shadow-neo transition-all duration-300;
+    @apply bg-white dark:bg-neogray-800 rounded-xl border border-neogray-200 dark:border-neogray-700 shadow-neo dark:shadow-neo-dark transition-all duration-300;
   }
   
   .neo-button {
@@ -69,11 +91,11 @@
   }
   
   .neo-button-secondary {
-    @apply px-4 py-2.5 bg-neogray-100 text-neogray-800 rounded-lg shadow-sm transition-all duration-200 hover:bg-neogray-200 active:scale-[0.98] font-medium border border-neogray-200;
+    @apply px-4 py-2.5 bg-neogray-100 text-neogray-800 dark:bg-neogray-800 dark:text-white rounded-lg shadow-sm transition-all duration-200 hover:bg-neogray-200 dark:hover:bg-neogray-700 active:scale-[0.98] font-medium border border-neogray-200 dark:border-neogray-700;
   }
   
   .neo-glass {
-    @apply backdrop-blur-lg bg-white/80 border border-white/50 shadow-neo;
+    @apply backdrop-blur-lg bg-white/80 dark:bg-neogray-900/80 border border-white/50 dark:border-neogray-800/50 shadow-neo dark:shadow-neo-dark;
   }
 
   .transition-neo {

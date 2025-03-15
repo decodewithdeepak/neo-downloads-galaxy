@@ -1,3 +1,4 @@
+
 import { VideoInfo, DownloadOption, DownloadHistoryItem } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 
@@ -149,12 +150,17 @@ export const downloadVideo = async (
     
     // For demo purposes, we'll simulate the download progress
     // In a real implementation, you would stream the response and track progress
+    let currentProgress = 0;
     const progressInterval = setInterval(() => {
       const randomIncrement = Math.random() * 10;
-      progressCallback((prev) => {
-        const newProgress = prev + randomIncrement;
-        return newProgress >= 100 ? 100 : newProgress;
-      });
+      currentProgress += randomIncrement;
+      
+      if (currentProgress >= 100) {
+        currentProgress = 100;
+        clearInterval(progressInterval);
+      }
+      
+      progressCallback(currentProgress);
     }, 500);
     
     // Simulate download delay

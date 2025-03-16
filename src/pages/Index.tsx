@@ -38,6 +38,11 @@ const Index = () => {
   const handleDownload = async (option: DownloadOption) => {
     if (!videoInfo) return;
 
+    toast({
+      title: "Sandbox Mode",
+      description: "This is a demo. In sandbox mode, downloads are simulated and no actual files will be downloaded.",
+    });
+
     setDownloadProgress({
       status: "downloading",
       progress: 0,
@@ -57,8 +62,8 @@ const Index = () => {
 
       if (success) {
         toast({
-          title: "Download Complete",
-          description: `Your ${option.format.toUpperCase()} file has been downloaded successfully`,
+          title: "Download Simulated",
+          description: `In a full deployment, your ${option.format.toUpperCase()} file would be downloaded now.`,
         });
       }
     } catch (error) {

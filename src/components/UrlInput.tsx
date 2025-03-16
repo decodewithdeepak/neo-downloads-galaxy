@@ -147,13 +147,16 @@ const UrlInput = ({ onSubmit, isLoading, className }: UrlInputProps) => {
       )}
       
       <div className="text-center text-sm text-muted-foreground mt-2">
-        <p>
-          Make sure the backend server is running at <code className="bg-muted px-1 py-0.5 rounded">http://localhost:5000</code>
+        <p className="font-medium">
+          ⚠️ Sandbox Mode Active ⚠️
         </p>
         <p className="mt-1">
-          To start the server, open a terminal in the server directory and run:
+          This application is running in demo mode without a backend server.
           <br />
-          <code className="bg-muted px-1 py-0.5 rounded">npm start</code> or <code className="bg-muted px-1 py-0.5 rounded">npm run dev</code>
+          Video information will be simulated and downloads will not be functional.
+        </p>
+        <p className="mt-2 text-xs">
+          For full functionality, deploy the server component separately or run locally with the backend server.
         </p>
       </div>
     </div>

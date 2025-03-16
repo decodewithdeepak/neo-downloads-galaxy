@@ -1,5 +1,5 @@
 
-import { VideoInfo, DownloadOption, DownloadHistoryItem } from "@/types";
+import { VideoInfo, DownloadOption, DownloadProgress, DownloadHistoryItem } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 
 // API base URL - this should point to your Express server
@@ -56,12 +56,32 @@ export const fetchVideoInfo = async (url: string): Promise<VideoInfo | null> => 
     }
     
     console.log(`Attempting to fetch video info for ID: ${videoId}`);
-    console.log(`Using API URL: ${API_BASE_URL}/api/video-info?videoId=${videoId}`);
+    
+    // Check if the server is running
+    try {
+      const serverCheckResponse = await fetch(`${API_BASE_URL}/`, { 
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log(`Server check response status: ${serverCheckResponse.status}`);
+    } catch (error) {
+      console.error("Server check failed:", error);
+      throw new Error("Cannot connect to the server. Please make sure the backend server is running at " + API_BASE_URL);
+    }
     
     // Real API call to our backend
-    const apiUrl = `${API_BASE_URL}/api/video-info?${videoId ? `videoId=${videoId}` : ''}${playlistId ? `&playlistId=${playlistId}` : ''}`;
+    console.log(`Using API URL: ${API_BASE_URL}/api/video-info?videoId=${videoId}`);
     
-    const response = await fetch(apiUrl);
+    const response = await fetch(`${API_BASE_URL}/api/video-info?${videoId ? `videoId=${videoId}` : ''}${playlistId ? `&playlistId=${playlistId}` : ''}`, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: "Unknown error" }));

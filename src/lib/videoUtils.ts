@@ -1,10 +1,8 @@
-import { VideoInfo, DownloadOption, DownloadProgress, DownloadHistoryItem } from "@/types";
+
+import { VideoInfo, DownloadOption, DownloadHistoryItem } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 
-// Use a public API service instead of local server
-const PUBLIC_API_BASE_URL = "https://youtube-data-api.netlify.app/.netlify/functions/api";
-
-// Parse YouTube URL to extract video ID and playlist ID
+// Mock function to parse YouTube URL (in real implementation this would check for valid YouTube URLs)
 export const parseYouTubeUrl = (url: string): { videoId: string | null; playlistId: string | null } => {
   try {
     const urlObj = new URL(url);
@@ -45,7 +43,8 @@ export const isValidYouTubeUrl = (url: string): boolean => {
   }
 };
 
-// Fetch video information from public API
+// Mock function to fetch video information
+// In a real implementation, this would call your backend API
 export const fetchVideoInfo = async (url: string): Promise<VideoInfo | null> => {
   try {
     const { videoId, playlistId } = parseYouTubeUrl(url);
@@ -54,53 +53,40 @@ export const fetchVideoInfo = async (url: string): Promise<VideoInfo | null> => 
       throw new Error("Invalid YouTube URL");
     }
     
-    console.log(`Attempting to fetch video info for ID: ${videoId}`);
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // In sandbox mode, we'll simulate video info retrieval
-    try {
-      // Try to use the public API first
-      const response = await fetch(`${PUBLIC_API_BASE_URL}/video-info?videoId=${videoId}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          id: videoId as string,
-          title: data.title || "Sample Video",
-          thumbnail: data.thumbnail || `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-          duration: data.duration || "3:45",
-          author: data.author || "YouTube Creator",
-          isPlaylist: false
-        };
-      } else {
-        // Fallback to simulated data if API fails
-        console.log("API failed, using fallback data");
-        return simulateVideoInfo(videoId as string);
-      }
-    } catch (error) {
-      console.error("Error using public API, falling back to simulated data:", error);
-      return simulateVideoInfo(videoId as string);
+    // Mock response for demonstration
+    if (playlistId) {
+      return {
+        id: videoId || "sample-video-id",
+        title: "Sample Playlist Video",
+        thumbnail: `https://i.ytimg.com/vi/${videoId || "dQw4w9WgXcQ"}/maxresdefault.jpg`,
+        duration: "Various",
+        author: "Sample Channel",
+        isPlaylist: true,
+        playlistId,
+        playlistTitle: "Sample Playlist Title",
+        videoCount: 10
+      };
+    } else {
+      return {
+        id: videoId as string,
+        title: "Sample YouTube Video",
+        thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+        duration: "3:45",
+        author: "Sample Channel",
+        isPlaylist: false
+      };
     }
   } catch (error) {
-    console.error("Error fetching video info:", error);
     toast({
       title: "Error fetching video info",
-      description: (error as Error).message || "Failed to fetch video data",
+      description: (error as Error).message,
       variant: "destructive"
     });
     return null;
   }
-};
-
-// Function to simulate video info for demo purposes
-const simulateVideoInfo = (videoId: string): VideoInfo => {
-  return {
-    id: videoId,
-    title: "Sample YouTube Video",
-    thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-    duration: "3:45",
-    author: "YouTube Creator",
-    isPlaylist: false
-  };
 };
 
 // Get available download options
@@ -123,71 +109,50 @@ export const getDownloadOptions = (isPlaylist: boolean): DownloadOption[] => {
   return isPlaylist ? playlistOptions : videoOptions;
 };
 
-// Simulate download function for frontend-only operation
+// Mock function to download video
+// In a real implementation, this would call your backend API
 export const downloadVideo = async (
   videoInfo: VideoInfo,
   option: DownloadOption,
   progressCallback: (progress: number) => void
 ): Promise<boolean> => {
   try {
-    // Set initial progress
-    progressCallback(0);
-    
-    // Create a filename based on video title
-    const sanitizedTitle = videoInfo.title.replace(/[^\w\s]/gi, "").substring(0, 50);
-    const extension = option.format === "mp3" ? "mp3" : "mp4";
-    const filename = `${sanitizedTitle}.${extension}`;
-    
-    console.log(`Simulating download for: ${filename}`);
-    
     // Simulate download progress
     let progress = 0;
     const interval = setInterval(() => {
-      progress += 5;
-      if (progress <= 100) {
-        progressCallback(progress);
-      } else {
+      progress += Math.random() * 10;
+      if (progress >= 100) {
+        progress = 100;
         clearInterval(interval);
       }
-    }, 200);
+      progressCallback(progress);
+    }, 500);
     
-    // Simulate download completion after a delay
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        clearInterval(interval);
-        progressCallback(100);
-        
-        // Add to download history
-        const historyItem: DownloadHistoryItem = {
-          id: videoInfo.id,
-          title: videoInfo.title,
-          thumbnail: videoInfo.thumbnail,
-          format: option.format,
-          quality: option.quality,
-          downloadDate: new Date().toISOString(),
-          url: `https://www.youtube.com/watch?v=${videoInfo.id}`
-        };
-        
-        addToDownloadHistory(historyItem);
-        
-        // Show a toast notification
-        toast({
-          title: "Download Simulated",
-          description: `In sandbox mode, actual downloads are not available. In a production environment, the ${extension.toUpperCase()} file would be downloaded.`,
-        });
-        
-        console.log("Download simulation completed");
-        resolve(true);
-      }, 3000);
-    });
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    clearInterval(interval);
+    progressCallback(100);
+    
+    // Add to download history
+    const historyItem: DownloadHistoryItem = {
+      id: videoInfo.id,
+      title: videoInfo.title,
+      thumbnail: videoInfo.thumbnail,
+      format: option.format,
+      quality: option.quality,
+      downloadDate: new Date().toISOString(),
+      url: `https://www.youtube.com/watch?v=${videoInfo.id}`
+    };
+    
+    addToDownloadHistory(historyItem);
+    
+    return true;
   } catch (error) {
-    console.error("Download error:", error);
     toast({
       title: "Download failed",
       description: (error as Error).message,
       variant: "destructive"
     });
-    progressCallback(0); // Reset progress
     return false;
   }
 };

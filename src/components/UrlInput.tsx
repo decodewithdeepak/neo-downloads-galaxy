@@ -147,7 +147,14 @@ const UrlInput = ({ onSubmit, isLoading, className }: UrlInputProps) => {
       )}
       
       <div className="text-center text-sm text-muted-foreground mt-2">
-        Make sure the backend server is running at <code className="bg-muted px-1 py-0.5 rounded">http://localhost:5000</code>
+        <p>
+          Make sure the backend server is running at <code className="bg-muted px-1 py-0.5 rounded">http://localhost:5000</code>
+        </p>
+        <p className="mt-1">
+          To start the server, open a terminal in the server directory and run:
+          <br />
+          <code className="bg-muted px-1 py-0.5 rounded">npm start</code> or <code className="bg-muted px-1 py-0.5 rounded">npm run dev</code>
+        </p>
       </div>
     </div>
   );
